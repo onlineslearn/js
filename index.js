@@ -1,5 +1,5 @@
 window.addEventListener('DOMContentLoaded',()=>{
-    document.getElementById('close-sidebar').addEventListener('click',()=>{
+    document.getElementById('close-menu').addEventListener('click',()=>{
         history.back()
     })
 })

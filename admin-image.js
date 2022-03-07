@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
         LOADER_CIRCLE.style.display = 'block'
         const form = new FormData(document.getElementById('container-image-uploader'))
         const URL_SEARCH_PARAEMS = new URLSearchParams
+        URL_SEARCH_PARAEMS.set('do','add')
         URL_SEARCH_PARAEMS.set('imageTitle', form.get('imageTitle'))
         URL_SEARCH_PARAEMS.set('imageDescription', form.get('imageDescrition'))
         URL_SEARCH_PARAEMS.set('imageCategory', form.get('imageCategory'))
@@ -28,7 +29,9 @@ window.addEventListener('DOMContentLoaded', () => {
         e.preventDefault()
         const form = new FormData(document.getElementById('lists-images'))
         CURRENT_POSITION=0
-        deleteImage(form.getAll('image-id'))
+        if(confirm('Are you sure to delete?')){
+            deleteImage(form.getAll('image-id'))
+        }
     })
 })
 async function deleteImage(arrayId) {
@@ -36,7 +39,8 @@ async function deleteImage(arrayId) {
     LOADER_CIRCLE.style.display = 'block'
     const parems = new URLSearchParams
     parems.set('imageId', arrayId[CURRENT_POSITION])
-    const response = await fetch('/file.json')
+    parems.set('do', 'delete')
+    const response = await fetch(location.pathname,{method:"POST",body:parems})
     if (response.status == 200) {
         document.getElementById(arrayId[CURRENT_POSITION]).remove()
     } else {
@@ -59,7 +63,7 @@ function imageGetAll() {
             listContent.className = 'list-content'
             listContent.id = key
             const imgPreview = document.createElement('img')
-            imgPreview.src = xmlhttprequest.response[key].ThumbnailImage
+            imgPreview.src = xmlhttprequest.response[key].ImageThumbnail
             listContent.append(imgPreview)
             const listContentDetails = document.createElement('div')
             listContentDetails.className = 'list-content-details'
@@ -89,6 +93,6 @@ function imageGetAll() {
     const form = new URLSearchParams
     form.set('do', 'get')
     xmlhttprequest.addEventListener('error', err => alert(err))
-    xmlhttprequest.open('GET', '/file.json')
-    xmlhttprequest.send()
+    xmlhttprequest.open('POST', location.pathname)
+    xmlhttprequest.send(form)
 }
