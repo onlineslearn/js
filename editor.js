@@ -1,152 +1,198 @@
-var DESIGN_MODE = true
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded',async ()=>{
+    richTextEditor.document.designMode = 'on'
     const POST_CSS = document.createElement('link')
     POST_CSS.rel = 'stylesheet'
-    POST_CSS.href = 'https://cdn.worldclouds.ml/css/post-style.css'
-    editText.document.head.append(POST_CSS)
-    editText.document.designMode = 'on'
-    document.getElementById('save-draft').addEventListener('click', () => {
-        console.log('Working')
+    POST_CSS.href = 'https://cdn.wcrl.ml/textmate/css/rich-text-editor.css'
+    richTextEditor.document.head.append(POST_CSS)
+    document.getElementById('action-undo').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('undo',false,null)
     })
-    document.getElementById('undo').addEventListener('click', () => {
-        editText.document.execCommand("undo", false, null)
+    document.getElementById('action-redo').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('redo',false,null)
     })
-    document.getElementById('redo').addEventListener('click', () => {
-        editText.document.execCommand("redo", false, null)
+    document.getElementById('action-align-left').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('justifyLeft',false,null)
     })
-    document.getElementById('format_bold').addEventListener('click', () => {
-        editText.document.execCommand("bold", false, null)
+    document.getElementById('action-align-center').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('justifyCenter',false,null)
     })
-    document.getElementById('format_italic').addEventListener('click', () => {
-        editText.document.execCommand("italic", false, null)
+    document.getElementById('action-align-right').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('justifyRight',false,null)
     })
-    document.getElementById('format_underlined').addEventListener('click', () => {
-        editText.document.execCommand("underline", false, null)
+    document.getElementById('action-align-justify').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('justifyFull',false,null)
     })
-    document.getElementById('format_strikethrough').addEventListener('click', () => {
-        editText.document.execCommand("strikeThrough", false, null)
+    document.getElementById('format-bold').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('bold',false,null)
     })
-    document.getElementById('superscript').addEventListener('click', () => {
-        editText.document.execCommand("superscript", false, null)
+    document.getElementById('format-italic').addEventListener('click',()=>{
+        richTextEditor.document.execCommand('italic',false,null)
     })
-    document.getElementById('subscript').addEventListener('click', () => {
-        editText.document.execCommand("subscript", false, null)
+    document.getElementById('format_clear').addEventListener('click',e=>{
+        richTextEditor.document.execCommand("removeFormat", false, null)
     })
-    document.getElementById('format-article').addEventListener('click', () => {
-        editText.document.execCommand("formatBlock", false, 'p')
-    })
-    document.getElementById('format_align_left').addEventListener('click', () => {
-        editText.document.execCommand("justifyLeft", false, null)
-    })
-    document.getElementById('format_align_center').addEventListener('click', () => {
-        editText.document.execCommand("justifyCenter", false, null)
-    })
-    document.getElementById('format_align_right').addEventListener('click', () => {
-        editText.document.execCommand("justifyRight", false, null)
-    })
-    document.getElementById('format_align_justify').addEventListener('click', () => {
-        editText.document.execCommand("justifyFull", false, null)
-    })
-    document.getElementById('content_copy').addEventListener('click', () => {
-        editText.document.execCommand("copy", false, null)
-    })
-    document.getElementById('content_paste').addEventListener('click', () => {
-        navigator.permissions.query({ name: 'clipboard-read' }).then(result => {
-            if (result.state == 'granted' || result.state == 'prompt') {
-                navigator.clipboard.readText().then(e => {
-                    editText.document.execCommand("insertText", false, e)
-
-                }).catch(err => console.log(err))
-            }
-        })
-    })
-    document.getElementById('content_cut').addEventListener('click', () => {
-        editText.document.execCommand("cut", false, null)
-    })
-    document.getElementById('delete').addEventListener('click', () => {
-        editText.document.execCommand("delete", false, null)
-    })
-    document.getElementById('bullet_list').addEventListener('click', () => {
-        editText.document.execCommand("insertUnorderedList", false, null)
-    })
-    document.getElementById('format_list_numbered').addEventListener('click', () => {
-        editText.document.execCommand("insertOrderedList", false, null)
-    })
-    document.getElementById('format_indent_increase').addEventListener('click', () => {
-        editText.document.execCommand("indent", false, null)
-    })
-    document.getElementById('format_indent_decrease').addEventListener('click', () => {
-        editText.document.execCommand("outdent", false, null)
-    })
-    document.getElementById('font-size').addEventListener('change',e=>{
-        editText.document.execCommand('fontSize',false,parseInt(document.getElementById('font-size').value))
-    })
-    document.getElementById('text-font').addEventListener('change',e=>{
-        editText.document.execCommand('fontName',false,document.getElementById('text-font').value)
+    document.getElementById('text-color').addEventListener('change',e=>{
+        richTextEditor.document.execCommand('foreColor',false,document.getElementById('text-color').value)
     })
     document.getElementById('text-heading').addEventListener('change',e=>{
-        editText.document.execCommand("formatBlock", false, document.getElementById('text-heading').value)
+        richTextEditor.document.execCommand("formatBlock", false, document.getElementById('text-heading').value)
+    })
+    document.getElementById('font-size').addEventListener('change',e=>{
+        richTextEditor.document.execCommand('fontSize',false,parseInt(document.getElementById('font-size').value))
     })
     document.getElementById('format_quote').addEventListener('click',e=>{
-        editText.document.execCommand("formatBlock", false, 'blockquote')
+        richTextEditor.document.execCommand("formatBlock", false, 'blockquote')
     })
     document.getElementById('insert_link').addEventListener('click',e=>{
         const INSERT_LINK = prompt('Enter Link Here ')
         if(INSERT_LINK!=null && INSERT_LINK!=''){
-            editText.document.execCommand("createLink", false, INSERT_LINK)
+            richTextEditor.document.execCommand("createLink", false, INSERT_LINK)
         }
-        
     })
     document.getElementById('leak_remove').addEventListener('click',e=>{
-        editText.document.execCommand("unlink", false, null)
+        richTextEditor.document.execCommand("unlink", false, null)
     })
     document.getElementById('insert_image').addEventListener('click',e=>{
         const INSERT_LINK = prompt('Enter Image Link')
         if(INSERT_LINK!=null && INSERT_LINK!=''){
-            editText.document.execCommand("insertImage", false, INSERT_LINK)
+            richTextEditor.document.execCommand("insertImage", false, INSERT_LINK)
         }
-        
     })
-    document.getElementById('format_clear').addEventListener('click',e=>{
-        editText.document.execCommand("removeFormat", false, null)
+    document.getElementById('bullet_list').addEventListener('click', () => {
+        richTextEditor.document.execCommand("insertUnorderedList", false, null)
     })
-    document.getElementById('text-color').addEventListener('change',e=>{
-        editText.document.execCommand('foreColor',false,document.getElementById('text-color').value)
+    document.getElementById('format_list_numbered').addEventListener('click', () => {
+        richTextEditor.document.execCommand("insertOrderedList", false, null)
     })
-    document.getElementById('back-color').addEventListener('change',e=>{
-        editText.document.execCommand('backColor',false,document.getElementById('back-color').value)
-    })
-    document.getElementById('code-edit').addEventListener('click',e=>{
-        if(DESIGN_MODE){
-            editText.document.getElementsByTagName('body')[0].innerText = editText.document.getElementsByTagName('body')[0].innerHTML
-            editText.document.designMode = 'off'
-            DESIGN_MODE = false
+    document.getElementById('editor-mode').addEventListener('change',e=>{
+        if(e.target.checked){
+            document.getElementById('richTextEditor').style.display='none'
+            document.getElementById('rich-textarea').style.display='block'
+            document.getElementById('rich-textarea').value = richTextEditor.document.querySelector('body').innerHTML
+            richTextEditor.document.querySelector('body').innerHTML = null
         }else{
-            editText.document.getElementsByTagName('body')[0].innerHTML = editText.document.getElementsByTagName('body')[0].innerText
-            editText.document.designMode = 'on'
-            DESIGN_MODE = true
+            richTextEditor.document.querySelector('body').innerHTML = document.getElementById('rich-textarea').value
+            document.getElementById('rich-textarea').value=null
+            document.getElementById('richTextEditor').removeAttribute('style')            
+            document.getElementById('rich-textarea').removeAttribute('style')
         }
     })
-    document.getElementById('editor').addEventListener('submit',e=>{
-        e.preventDefault()
-        document.getElementById('progressbar-background').style.display = 'block'
-        const formdata = new FormData(document.getElementById('editor'))
-        const urlSearchParems = new URLSearchParams
-        urlSearchParems.set('postTitle',formdata.get('post-title'))
-        urlSearchParems.set('postDescription',formdata.get('post-description'))
-        urlSearchParems.set('postCategory',formdata.get('post-category'))
-        urlSearchParems.set('postThumbnail',formdata.get('post-thumbnail'))
-        urlSearchParems.set('postContent',editText.document.getElementsByTagName('body')[0].innerHTML)
-        fetch(location.pathname,{method:'POST',body:urlSearchParems}).then(response=>{
-            if(response.status==200){
-                window.location.pathname='/admin/post'
-            }else{
-                alert(response.statusText)
-            }
-            document.getElementById('progressbar-background').removeAttribute('style')
-        }).catch(err=>{
-            console.log(err)
-            document.getElementById('progressbar-background').removeAttribute('style')
+    document.getElementById('content-title').addEventListener('change',i=>{
+        i.target.value = i.target.value.toCapitalised()
+        document.getElementById('content-url-path').value = i.target.value.toLowerCase().split(' ').join('-')
+    })
+    document.getElementById('btn-publish').addEventListener('click',async ()=>{
+        document.getElementById('request-progressbar').style.display='block'
+        richTextEditor.document.designMode='off'
+        const ALL_INPUT = document.getElementsByClassName('action-btn')
+        Object.keys(ALL_INPUT).forEach(x=>{
+            ALL_INPUT[x].disabled = true
         })
+        const CONTENT_TITLE = document.getElementById('content-title').value
+        const CONTENT_DESCRIPTION = document.getElementById('content-description').value
+        const CONTENT_URL = document.getElementById('content-url-path').value
+        const CONTENT_THUMBNAIL = document.getElementById('content-thumbnail').value
+        const CONTENT_CATEGORY = document.getElementById('content-category').value
+        const CONTENT_BODY = richTextEditor.document.querySelector('body').innerHTML
+        if(CONTENT_TITLE.trim().length<5 || CONTENT_DESCRIPTION.trim().length<5 || CONTENT_URL.trim().length<5 || CONTENT_BODY.trim().length<5){
+            alert('Some field missing!')
+            Object.keys(ALL_INPUT).forEach(x=>{
+                ALL_INPUT[x].disabled = false
+            })
+            richTextEditor.document.designMode='on'
+            document.getElementById('request-progressbar').removeAttribute('style')
+            return false
+        }
+        const urlparem = new URLSearchParams
+        urlparem.set('ContentTitle',CONTENT_TITLE)
+        urlparem.set('ContentDescription',CONTENT_DESCRIPTION)
+        urlparem.set('ContentURL',CONTENT_URL)
+        urlparem.set('ContentBody',CONTENT_BODY)
+        urlparem.set('ContentCategory',CONTENT_CATEGORY)
+        urlparem.set('PublicVisivility','true')
+        urlparem.set('ContentThumbnail',CONTENT_THUMBNAIL)
+        const PUBLISH_REQUEST = await fetch(location.pathname,{
+            method:"POST",
+            body:urlparem,
+            credentials:"include"
+        }).catch(err=>alert(err))
+        if(PUBLISH_REQUEST.status==200){
+            history.back()
+        }else{
+            alert('Failed To Publish')
+        }
+        Object.keys(ALL_INPUT).forEach(x=>{
+            ALL_INPUT[x].disabled = false
+        })
+        richTextEditor.document.designMode='on'
+        document.getElementById('request-progressbar').removeAttribute('style')
+    })
+    document.getElementById('btn-save-draft').addEventListener('click',async ()=>{
+        document.getElementById('request-progressbar').style.display='block'
+        richTextEditor.document.designMode='off'
+        const ALL_INPUT = document.getElementsByClassName('action-btn')
+        Object.keys(ALL_INPUT).forEach(x=>{
+            ALL_INPUT[x].disabled = true
+        })
+        const CONTENT_TITLE = document.getElementById('content-title').value
+        const CONTENT_DESCRIPTION = document.getElementById('content-description').value
+        const CONTENT_CATEGORY = document.getElementById('content-category').value
+        const CONTENT_URL = document.getElementById('content-url-path').value
+        const CONTENT_THUMBNAIL = document.getElementById('content-thumbnail').value
+        const CONTENT_BODY = richTextEditor.document.querySelector('body').innerHTML
+        if(CONTENT_TITLE.trim().length<5 || CONTENT_DESCRIPTION.trim().length<5 || CONTENT_URL.trim().length<5 || CONTENT_BODY.trim().length<5){
+            alert('Some field missing!')
+            Object.keys(ALL_INPUT).forEach(x=>{
+                ALL_INPUT[x].disabled = false
+            })
+            richTextEditor.document.designMode='on'
+            document.getElementById('request-progressbar').removeAttribute('style')
+            return false
+        }
+        const urlparem = new URLSearchParams
+        urlparem.set('ContentTitle',CONTENT_TITLE)
+        urlparem.set('ContentDescription',CONTENT_DESCRIPTION)
+        urlparem.set('ContentURL',CONTENT_URL)
+        urlparem.set('ContentBody',CONTENT_BODY)
+        urlparem.set('ContentCategory',CONTENT_CATEGORY)
+        urlparem.set('PublicVisivility','false')
+        urlparem.set('ContentThumbnail',CONTENT_THUMBNAIL)
+        const PUBLISH_REQUEST = await fetch(location.pathname,{
+            method:"POST",
+            body:urlparem,
+            credentials:"include"
+        }).catch(err=>alert(err))
+        if(PUBLISH_REQUEST.status==200){
+            history.back()
+        }else{
+            alert('Failed To Publish')
+        }
+        Object.keys(ALL_INPUT).forEach(x=>{
+            ALL_INPUT[x].disabled = false
+        })
+        richTextEditor.document.designMode='on'
+        document.getElementById('request-progressbar').removeAttribute('style')
+    })
+    document.getElementById('btn-cancel').addEventListener('click',()=>{
+        if(confirm('Are you sure to cancel?')){
+            history.back()
+        }
     })
 })
+String.prototype.toCapitalised = function(){
+    const TextData = this.split(' ')
+    const rawText = new Array
+    TextData.forEach(txt=>{
+        const CText = txt.split('')
+        const CArray = new Array
+        CText.forEach((data,index)=>{
+            if(index==0){
+                CArray.push(data.toUpperCase())
+            }else{
+                CArray.push(data)
+            }
+        })
+        rawText.push(CArray.join(''))
+    })
+    return rawText.join(' ')
+}

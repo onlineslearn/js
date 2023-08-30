@@ -1,0 +1,299 @@
+let MEDIA_ICONS_OBJECT, PARENT_FOLDER, FOLDER_INFO
+const FIREBASE_REALTIME_DATABASE = 'https://cdntwit-default-rtdb.asia-southeast1.firebasedatabase.app'
+const FIREBASE_STORAGE = 'https://firebasestorage.googleapis.com/v0/b/cdntwit.appspot.com'
+const ADMIN_FILE_PATH = '/admin/files'
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('upload-file').addEventListener('click', () => UPLOAD_FILE())
+    document.getElementById('mob-open-file').addEventListener('click', () => OPEN_TAB())
+    document.getElementById('open-file').addEventListener('click', () => OPEN_TAB())
+    document.getElementById('new-folder').addEventListener('click', () => CREATE_FOLDER())
+    document.getElementById('delete-file').addEventListener('click', () => MEDIA_DELETE())
+    document.getElementById('mob-upload-file').addEventListener('click', () => UPLOAD_FILE())
+    document.getElementById('mob-create-folder').addEventListener('click', () => CREATE_FOLDER())
+    document.getElementById('mob-delete').addEventListener('click', () => MEDIA_DELETE())
+    document.getElementById('upload-cancel').addEventListener('click', () => {
+        document.getElementById('dialog-box').removeAttribute('style')
+        document.querySelector('.file-upload-container').removeAttribute('style')
+    })
+    document.getElementById('new-folder-cancel').addEventListener('click', () => {
+        document.getElementById('dialog-box').removeAttribute('style')
+        document.querySelector('.folder-create-container').removeAttribute('style')
+    })
+    document.getElementById('alert-cancel').addEventListener('click', () => {
+        document.getElementById('dialog-box').removeAttribute('style')
+        document.querySelector('.confirm-container').removeAttribute('style')
+    })
+    //File Explorer Handler
+    document.getElementById('new-folder-form').addEventListener('submit', (async f => {
+        f.preventDefault()
+        PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') || '@'
+        document.getElementById('new-folder-input').disabled = true
+        document.getElementById('create-folder-submit').disabled = true
+        document.getElementById('new-folder-cancel').disabled = true
+        const folderName = document.getElementById('new-folder-input')
+        if (folderName.value.trim().length > 2) {
+            document.getElementById('new-folder-loading-bar').style.display = 'block'
+            const folderRequest = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all.json`, {
+                method: "POST",
+                body: JSON.stringify({
+                    folderName: folderName.value,
+                    totalFiles: 0,
+                    parentFolder: PARENT_FOLDER,
+                    createdAt: new Date().toLocaleString('en-us', 'asia/calcutta')
+                })
+            })
+            document.getElementById('new-folder-loading-bar').removeAttribute('style')
+            document.getElementById('new-folder-input').removeAttribute('disabled')
+            document.getElementById('create-folder-submit').removeAttribute('disabled')
+            document.getElementById('new-folder-cancel').removeAttribute('disabled')
+            if (folderRequest.status == 200) {
+                folderName.value = null
+                document.getElementById('dialog-box').removeAttribute('style')
+                document.querySelector('.folder-create-container').removeAttribute('style')
+                LOAD_CONTENT()
+            } else {
+                alert('Failed to create folder')
+            }
+        }
+    }))
+    document.getElementById('file-upload-form').addEventListener('submit', async f => {
+        f.preventDefault()
+        PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') + '/'
+        document.getElementById('upload-file-input').disabled = true
+        document.getElementById('upload-submit').disabled = true
+        const uploadFile = document.getElementById('upload-file-input').files[0]
+        document.getElementById('upload-progress-bar').style.display = 'block'
+        const UploadBar = document.getElementById('upload-proccessed')
+        const UPLOAD_REQUEST = new XMLHttpRequest
+        UPLOAD_REQUEST.open('POST', `${FIREBASE_STORAGE}/o/${PARENT_FOLDER.split('/').join('%2F').replace('%2F', '')}${uploadFile.name}`)
+        UPLOAD_REQUEST.upload.addEventListener('progress', p => {
+            UploadBar.style.width = `${(p.loaded / p.total) * 100}%`
+        })
+        UPLOAD_REQUEST.addEventListener('load', async response => {
+            if (UPLOAD_REQUEST.status == 200) {
+                PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '')
+                const fileIndex = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all.json`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        fileSize: uploadFile.size,
+                        fileName: uploadFile.name,
+                        fileType: uploadFile.type,
+                        createdAt: new Date().toLocaleString('en-us', 'asia/calcutta'),
+                        parentFolder: PARENT_FOLDER || '@'
+                    })
+                })
+                if (fileIndex.status != 200) {
+                    alert('Failed To Index')
+                }
+                if (PARENT_FOLDER != '') {
+                    const fileCountUpdate = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all/${history.state.id}.json`, {
+                        method: "PATCH",
+                        body: JSON.stringify({
+                            totalFiles: history.state.totalFiles + 1
+                        })
+                    })
+                    if (fileCountUpdate.status != 200) {
+                        alert('Failed to update file count.')
+                    }
+                    history.state.totalFiles += 1
+                }
+                LOAD_CONTENT()
+                document.getElementById('dialog-box').removeAttribute('style')
+                document.querySelector('.file-upload-container').removeAttribute('style')
+                document.getElementById('file-upload-form').reset()
+            } else {
+                alert('Failed to upload')
+            }
+            document.getElementById('upload-file-input').removeAttribute('disabled')
+            document.getElementById('upload-submit').removeAttribute('disabled')
+            document.getElementById('upload-progress-bar').removeAttribute('style')
+            UploadBar.removeAttribute('style')
+        })
+        UPLOAD_REQUEST.send(uploadFile)
+        document.getElementById('upload-cancel').addEventListener('click', () => UPLOAD_REQUEST.abort())
+    })
+    LOAD_CONTENT()
+    document.getElementById('refresh-file').addEventListener('click',()=>LOAD_CONTENT())
+    document.getElementById('mob-refresh').addEventListener('click',()=>LOAD_CONTENT())
+    document.getElementById('file-delete').addEventListener('click', () => {
+        const form = new FormData(document.getElementById('files-list'))
+        document.getElementById('confirm-loading-bar').style.display = 'block'
+        form.getAll('file').forEach(async (x, index) => {
+            if (document.getElementById(x).dataset['fileName'].split('.').length > 1) {
+                PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') + '/'
+                const FILE_PATH = `${FIREBASE_STORAGE}/o/${PARENT_FOLDER.split('/').join('%2F').replace('%2F', '')}${document.getElementById(x).dataset['fileName']}`
+                const FILE_DELETE_REQUEST = await fetch(FILE_PATH, { method: "DELETE" })
+                if (FILE_DELETE_REQUEST.status == 204) {
+                    const INDEX_DELETE = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all/${x}.json`, { method: "DELETE" })
+                    if (INDEX_DELETE.status == 200) {
+                        if(history.state){
+                            history.state.totalFiles -= 1
+                        }
+                        if (form.getAll('file').length - 1 == index) {
+                            if (PARENT_FOLDER != '' && history.state) {
+                                const fileCountUpdate = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all/${history.state.id}.json`, {
+                                    method: "PATCH",
+                                    body: JSON.stringify({
+                                        totalFiles: history.state.totalFiles
+                                    })
+                                })
+                                if (fileCountUpdate.status != 200) {
+                                    alert('Failed to update file count.')
+                                }
+                            }
+                            LOAD_CONTENT()
+                            document.getElementById('dialog-box').removeAttribute('style')
+                            document.querySelector('.confirm-container').removeAttribute('style')
+                        }
+                    } else {
+                        alert('Index delete failed')
+                    }
+                } else {
+                    console.log('Failed To Delete.')
+                }
+            } else {
+                const INDEX_DELETE = await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all/${x}.json`, { method: "DELETE" })
+                if (INDEX_DELETE.status == 200) {
+                    LOAD_CONTENT()
+                    document.getElementById('dialog-box').removeAttribute('style')
+                    document.querySelector('.confirm-container').removeAttribute('style')
+                } else {
+                    alert('Folder delete failed')
+                }
+            }
+            document.getElementById('confirm-loading-bar').removeAttribute('style')
+        })
+    })
+    document.getElementById('mob-download-link').addEventListener('click',()=>{COPY_LINK()})
+    document.getElementById('download-link').addEventListener('click',()=>{COPY_LINK()})
+})
+async function UPLOAD_FILE() {
+    document.getElementById('dialog-box').style.display = 'flex'
+    document.querySelector('.file-upload-container').style.display = 'block'
+}
+async function CREATE_FOLDER() {
+    document.getElementById('dialog-box').style.display = 'flex'
+    document.querySelector('.folder-create-container').style.display = 'block'
+}
+async function MEDIA_DELETE() {
+    const form = new FormData(document.getElementById('files-list'))
+    if (form.getAll('file').length < 1) {
+        return
+    }
+    document.getElementById('dialog-box').style.display = 'flex'
+    document.querySelector('.confirm-container').style.display = 'block'
+}
+function PUSH_STATE() {
+    const ALL_ANCHER = document.getElementsByClassName('file-detail')
+    Object.keys(ALL_ANCHER).forEach(ID => {
+        ALL_ANCHER[ID].addEventListener('dblclick', () => {
+            history.pushState({
+                id: ALL_ANCHER[ID].dataset['id'],
+                totalFiles: parseInt(ALL_ANCHER[ID].dataset['totalFiles'])
+            }, null, ALL_ANCHER[ID].dataset['path'])
+            LOAD_CONTENT()
+        })
+    })
+    PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') || '@'
+}
+addEventListener('popstate', e => LOAD_CONTENT())
+async function LOAD_CONTENT() {
+    document.getElementById('file-loading-bar').style.display='block'
+    document.getElementById('files-list').innerHTML = null
+    if (MEDIA_ICONS_OBJECT == undefined) {
+        MEDIA_ICONS_OBJECT = await (await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/icons.json`)).json()
+    }
+    PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') || '@'
+    document.querySelector('.container-path-box').innerHTML = `Home:${PARENT_FOLDER.split('/').join('>').replace('@','')}`
+    document.title = `Home:${PARENT_FOLDER.split('/').join('>').replace('@','')} - File Explorer`
+    const ALL_FILE = await (await fetch(`${FIREBASE_REALTIME_DATABASE}/website/files/all.json?orderBy="parentFolder"&equalTo="${PARENT_FOLDER}"`)).json()
+    Object.keys(ALL_FILE).forEach(index => {
+        if (ALL_FILE[index].folderName != undefined) {
+            const fileListItem = document.createElement('div')
+            fileListItem.className = 'file-list-item'
+            fileListItem.innerHTML = `${MEDIA_ICONS_OBJECT.folder}`
+            const label = document.createElement('label')
+            label.className = 'file-detail'
+            const fileTitle = document.createElement('div')
+            fileTitle.className = 'file-title'
+            fileTitle.innerHTML = ALL_FILE[index].folderName
+            label.append(fileTitle)
+            const fileInfo = document.createElement('div')
+            fileInfo.className = 'file-additional-info'
+            fileInfo.innerHTML = `<div>${ALL_FILE[index].totalFiles} Items</div><div>${ALL_FILE[index].createdAt}</div><div>folder</div>`
+            label.append(fileInfo)
+            label.dataset['path'] = `${window.location.pathname.replace('/admin/files/', '')}/${ALL_FILE[index].folderName}`
+            label.dataset['totalFiles'] = ALL_FILE[index].totalFiles
+            label.dataset['id'] = index
+            label.setAttribute('for', index)
+            fileListItem.append(label)
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            checkbox.name = 'file'
+            checkbox.dataset['fileName'] = ALL_FILE[index].folderName
+            checkbox.value = index
+            checkbox.id = index
+            fileListItem.append(checkbox)
+            // ancher.append(fileListItem)
+            document.getElementById('files-list').append(fileListItem)
+        } else {
+            const fileListItem = document.createElement('div')
+            fileListItem.className = 'file-list-item'
+            const icons = MEDIA_ICONS_OBJECT[ALL_FILE[index].fileName.split('.')[ALL_FILE[index].fileName.split('.').length - 1]] || MEDIA_ICONS_OBJECT['unknown']
+            fileListItem.innerHTML = `${icons}`
+            const label = document.createElement('label')
+            label.setAttribute('for', index)
+            // label.className = 'file-detail'
+            const fileTitle = document.createElement('div')
+            fileTitle.className = 'file-title'
+            fileTitle.innerHTML = ALL_FILE[index].fileName
+            label.append(fileTitle)
+            const fileInfo = document.createElement('div')
+            fileInfo.className = 'file-additional-info'
+            fileInfo.innerHTML = `<div>${FILE_SIZE(ALL_FILE[index].fileSize)}</div><div>${ALL_FILE[index].createdAt}</div><div>${ALL_FILE[index].fileType}</div>`
+            label.append(fileInfo)
+            label.for = index
+            fileListItem.append(label)
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            checkbox.name = 'file'
+            checkbox.value = index
+            checkbox.dataset['fileName'] = ALL_FILE[index].fileName
+            checkbox.id = index
+            PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '') + '/'
+            checkbox.dataset['url']=`${FIREBASE_STORAGE}/o/${PARENT_FOLDER.split('/').join('%2F').replace('%2F', '')}${ALL_FILE[index].fileName}?alt=media`
+            fileListItem.append(checkbox)
+            document.getElementById('files-list').append(fileListItem)
+        }
+    })
+    PUSH_STATE()
+    document.getElementById('file-loading-bar').removeAttribute('style')
+}
+function FILE_SIZE(size) {
+    let fSExt = new Array('Bytes', 'KB', 'MB', 'GB'),
+        i = 0; while (size > 900) { size /= 1024; i++; }
+    const exactSize = (Math.round(size * 100) / 100) + ' ' + fSExt[i]
+    return exactSize
+}
+function COPY_LINK(){
+    PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '')
+    const form = new FormData(document.getElementById('files-list'))
+    if(form.getAll('file').length==1 && document.getElementById(form.get('file')).dataset['url']){
+        const DOWNLOAD_URL = document.getElementById(form.get('file')).dataset['url']
+        navigator.permissions.query({ name: 'clipboard-write' }).then(result => {
+            if (result.state == 'granted' || result.state == 'prompt') {
+                navigator.clipboard.writeText(DOWNLOAD_URL).then(e => {
+                    alert('Copy Success')
+                }).catch(err => console.log(err))
+            }
+        })
+    }
+}
+function OPEN_TAB(){
+    PARENT_FOLDER = window.location.pathname.replace(ADMIN_FILE_PATH, '')
+    const form = new FormData(document.getElementById('files-list'))
+    if(form.getAll('file').length==1 && document.getElementById(form.get('file')).dataset['url']){
+        const DOWNLOAD_URL = document.getElementById(form.get('file')).dataset['url']
+        window.open(DOWNLOAD_URL)
+    }
+}
